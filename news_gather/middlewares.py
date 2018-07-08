@@ -4,9 +4,11 @@
 #
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
-
+from fake_useragent import UserAgent
 from scrapy import signals
 
+# from tools.crawl_xici_ip import GetIp
+from utils.mhtutil import saveAsMht
 
 class NewsGatherSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -101,3 +103,38 @@ class NewsGatherDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+class NewsGatherDownloadAndSaveMiddleware(object):
+    def process_request(self, request, spider):
+        print("haha")
+        saveAsMht(request.url, "test.mhtml")
+        pass
+
+
+class RandomUserAgentMiddleware(object):
+    # 随机更换agent
+
+    def __init__(self, crawler):
+        super(RandomUserAgentMiddleware, self).__init__()
+        # self.user_agent_list = crawler.settings.get('user_agent_list', [])
+        self.ua = UserAgent()
+        self.ua_type = crawler.settings.get("RANDOM_UA_TYPE", "random")
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler)
+
+    def process_request(self, request, spider):
+        def get_ua():
+            return getattr(self.ua, self.ua_type)
+
+        request.headers.setdefault('User-Agent', get_ua())
+        # request.meta['proxy'] = "http://175.155.225.90:8118/"
+
+
+# class RandomProxyMiddleware(object):
+#     def process_request(self, request, spider):
+#         get_ip = GetIp()
+#         request.meta["proxy"] = get_ip.get_random_ip()
+#         print(request.meta["proxy"])
